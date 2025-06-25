@@ -1,0 +1,73 @@
+from pydantic import BaseModel, Field
+from typing import List, Optional
+from datetime import datetime
+
+from app.models.common import IDModelMixin
+from app.models.user import UserPublic
+from app.models.enums import (
+    PoolStatus, ContributionPeriod, PoolMemberRole,
+    DisbursementStatus, VoteOption, JoinRequestStatus,
+    ClaimApprovalSystem
+)
+
+class JoinRequestCreate(BaseModel):
+    pool_code: str
+
+class JoinRequestPublic(IDModelMixin, BaseModel):
+    pool_id: str
+    user_id: str
+    user_details: Optional[UserPublic] = None
+    status: JoinRequestStatus
+    requested_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class PoolMemberPublic(IDModelMixin, BaseModel):
+    pool_id: str
+    user_id: str
+    user_details: Optional[UserPublic] = None
+    role: PoolMemberRole
+    joined_date: datetime
+
+    class Config:
+        from_attributes = True
+
+class PoolBase(BaseModel):
+    title: str
+    description: str
+    type_of_community: str
+    max_members: int = Field(gt=0)
+    contribution_period: ContributionPeriod
+    contribution_amount_per_member: int = Field(ge=0)
+    benefit_coverage: Optional[List[str]] = []
+    claim_voting_duration: str = "24_HOURS"
+
+class PoolCreate(PoolBase):
+    pass
+
+class PoolUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    max_members: Optional[int] = Field(None, gt=0)
+
+class PoolPublic(IDModelMixin, PoolBase):
+    creator_user_id: str
+    pool_code: str
+    current_amount: float
+    status: PoolStatus
+    createdAt: datetime
+    updatedAt: datetime
+
+    class Config:
+        from_attributes = True
+
+class DisbursementCreate(BaseModel):
+    recipient_user_id: str
+    amount: float = Field(gt=0)
+    purpose: str
+    proof_url: Optional[str] = None
+
+class VoteCreate(BaseModel):
+    vote: VoteOption
+    comment: Optional[str] = None
