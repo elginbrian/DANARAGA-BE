@@ -7,7 +7,7 @@ from app.models.user import UserPublic
 from app.models.enums import (
     PoolStatus, ContributionPeriod, PoolMemberRole,
     DisbursementStatus, VoteOption, JoinRequestStatus,
-    ClaimApprovalSystem
+    ClaimApprovalSystem, PaymentMethod, ContributionStatus
 )
 
 class JoinRequestCreate(BaseModel):
@@ -33,6 +33,51 @@ class PoolMemberPublic(IDModelMixin, BaseModel):
     class Config:
         from_attributes = True
 
+class ContributionPublic(IDModelMixin, BaseModel):
+    pool_id: str
+    member_id: str
+    amount: float
+    contribution_date: datetime
+    payment_method: PaymentMethod
+    status: ContributionStatus
+
+    class Config:
+        from_attributes = True
+
+class VotePublic(BaseModel):
+    user_id: str
+    vote: VoteOption
+    voted_at: datetime
+    comment: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+class VoteCreate(BaseModel):
+    vote: VoteOption
+    comment: Optional[str] = Field(None, max_length=280)
+
+class CreateDisbursementRequest(BaseModel):
+    recipient_user_id: str
+    amount: float = Field(gt=0, description="Jumlah dana yang diajukan")
+    purpose: str = Field(..., max_length=500, description="Tujuan penggunaan dana")
+    proof_url: Optional[str] = None
+
+class DisbursementPublic(IDModelMixin, BaseModel):
+    pool_id: str
+    recipient_user_id: str
+    recipient_details: Optional[UserPublic] = None
+    amount: float
+    purpose: str
+    status: DisbursementStatus
+    request_date: datetime
+    votes_for: int
+    votes_against: int
+    voters: List[VotePublic] = []
+
+    class Config:
+        from_attributes = True
+
 class PoolBase(BaseModel):
     title: str
     description: str
@@ -41,6 +86,7 @@ class PoolBase(BaseModel):
     contribution_period: ContributionPeriod
     contribution_amount_per_member: int = Field(ge=0)
     benefit_coverage: Optional[List[str]] = []
+    claim_approval_system: ClaimApprovalSystem = ClaimApprovalSystem.VOTING_50_PERCENT
     claim_voting_duration: str = "24_HOURS"
 
 class PoolCreate(PoolBase):
@@ -61,13 +107,3 @@ class PoolPublic(IDModelMixin, PoolBase):
 
     class Config:
         from_attributes = True
-
-class DisbursementCreate(BaseModel):
-    recipient_user_id: str
-    amount: float = Field(gt=0)
-    purpose: str
-    proof_url: Optional[str] = None
-
-class VoteCreate(BaseModel):
-    vote: VoteOption
-    comment: Optional[str] = None

@@ -21,6 +21,17 @@ class PoolStatus(str, Enum):
     OPEN = "OPEN"
     CLOSED = "CLOSED"
 
+class PaymentMethod(str, Enum):
+    CREDIT_CARD = "CREDIT_CARD"
+    BANK_TRANSFER = "BANK_TRANSFER"
+    E_WALLET = "E_WALLET"
+    CASH = "CASH"
+
+class ReceiptStatus(str, Enum):
+    PENDING = "PENDING"
+    PROCESSED = "PROCESSED"
+    FAILED = "FAILED"
+
 class PoolMemberRole(str, Enum):
     ADMIN = "ADMIN"
     MEMBER = "MEMBER"
@@ -41,6 +52,8 @@ class DisbursementStatus(str, Enum):
     REJECTED = "REJECTED"
     DISBURSED = "DISBURSED"
     CANCELLED = "CANCELLED"
+    PROCESSING_PAYOUT = "PROCESSING_PAYOUT" 
+    FAILED_PAYOUT = "FAILED_PAYOUT"        
 
 class VoteOption(str, Enum):
     FOR = "FOR"
