@@ -111,7 +111,10 @@ async def initiate_contribution(
     db: AsyncIOMotorDatabase = Depends(get_database)
 ):
     result = await microfunding_service.create_contribution(db, user_id=current_user.id, pool_id=pool_id, amount=payload.get("amount"))
-    return ApiResponse(data=result)
+    return ApiResponse(data={
+        "contributionId": result.get("contributionId") or result.get("contribution_id"),
+        "paymentToken": result.get("paymentToken") or result.get("payment_token")
+    })
 
 @router.get("/pools/{pool_id}/contributions/me")
 async def get_my_pool_contributions(

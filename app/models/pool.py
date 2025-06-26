@@ -66,11 +66,15 @@ class CreateDisbursementRequest(BaseModel):
 class DisbursementPublic(IDModelMixin, BaseModel):
     pool_id: str
     recipient_user_id: str
+    requested_by_user_id: Optional[str] = None
     recipient_details: Optional[UserPublic] = None
     amount: float
     purpose: str
+    proof_url: Optional[str] = None
     status: DisbursementStatus
     request_date: datetime
+    voting_deadline: Optional[datetime] = None
+    resolved_at: Optional[datetime] = None
     votes_for: int
     votes_against: int
     voters: List[VotePublic] = []
