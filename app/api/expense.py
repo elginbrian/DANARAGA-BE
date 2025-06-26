@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status
-from typing import List
+from typing import List, Any, Dict
 
 from app.security import get_current_active_user
 from app.models.user import UserPublic
+from app.models.expense import ExpenseRecordPublic
 from app.services import gemini_service, expense_service
 from app.core.db import get_database
 from motor.motor_asyncio import AsyncIOMotorDatabase
@@ -14,7 +15,7 @@ async def upload_receipt(
     db: AsyncIOMotorDatabase = Depends(get_database),
     current_user: UserPublic = Depends(get_current_active_user),
     receiptImage: UploadFile = File(...)
-):
+) -> Dict[str, Any]:
     if not receiptImage.content_type or not receiptImage.content_type.startswith("image/"):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="File harus berupa gambar.")
         
@@ -35,7 +36,7 @@ async def get_all_expenses(
     sortOrder: str = "desc",
     db: AsyncIOMotorDatabase = Depends(get_database),
     current_user: UserPublic = Depends(get_current_active_user)
-):
+) -> Dict[str, Any]:
     params = {"page": page, "limit": limit, "sortBy": sortBy, "sortOrder": sortOrder}
     result = await expense_service.get_all(db, user_id=current_user.id, params=params)
     return result
@@ -45,7 +46,7 @@ async def get_summary_of_expenses(
     period: str,
     db: AsyncIOMotorDatabase = Depends(get_database),
     current_user: UserPublic = Depends(get_current_active_user)
-):
+) -> Dict[str, Any]:
     summary = await expense_service.get_summary(db, user_id=current_user.id, period=period)
     return {"success": True, "summary": summary}
 
@@ -53,6 +54,6 @@ async def get_summary_of_expenses(
 async def get_spending_recommendations(
     db: AsyncIOMotorDatabase = Depends(get_database),
     current_user: UserPublic = Depends(get_current_active_user)
-):
+) -> Dict[str, Any]:
     recommendations = await expense_service.get_recommendations(db, user_id=current_user.id)
     return {"success": True, "recommendations": recommendations}

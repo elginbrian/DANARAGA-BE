@@ -23,7 +23,6 @@ class AuthResponse(BaseModel):
 
 @router.post(
     "/register", 
-    response_model=UserPublic, 
     status_code=status.HTTP_201_CREATED,
     summary="Register a new user"
 )
@@ -39,7 +38,7 @@ async def register_user(
         )
     
     user = await user_service.create_user(db=db, user_in=user_in)
-    return user
+    return {"message": "User registered successfully"}
 
 @router.post("/login", response_model=AuthResponse, summary="User login")
 async def login(

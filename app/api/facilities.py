@@ -61,7 +61,7 @@ async def search_facilities(
 async def get_facility_by_id(
     facility_id: str,
     db: AsyncIOMotorDatabase = Depends(get_database),
-):
+) -> Dict[str, FacilityPublic]:
     facility = await facility_service.get_facility_by_id(db, facility_id)
     if not facility:
         raise HTTPException(status_code=404, detail="Facility not found")
