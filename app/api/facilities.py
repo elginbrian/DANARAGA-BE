@@ -1,8 +1,7 @@
-
 from fastapi import APIRouter, Depends, Body, HTTPException, status
 from typing import List, Dict, Any
 
-from app.models.facility import FacilityPublic
+from app.models.facility import FacilityPublic, FacilityResponse
 from app.models.user import UserPublic
 from app.security import get_current_active_user
 from app.services import gemini_service, facility_service
@@ -11,7 +10,7 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 
 router = APIRouter()
 
-@router.post("/recommendations", response_model=List[FacilityPublic], summary="Get AI-based facility recommendations")
+@router.post("/recommendations", response_model=FacilityResponse, summary="Get AI-based facility recommendations")
 async def get_ai_recommendations(
     payload: Dict[str, Any] = Body(...),
     current_user: UserPublic = Depends(get_current_active_user),
@@ -23,18 +22,26 @@ async def get_ai_recommendations(
     
     mongo_filter = await gemini_service.generate_facility_filter(user_profile_for_ai)
     facilities = await facility_service.get_facilities_by_filter(db, filter=mongo_filter)
-    return facilities
+    
+    return FacilityResponse(
+        data=facilities,
+        source="AI_RECOMMENDATIONS"
+    )
 
-@router.post("/nearby", response_model=List[FacilityPublic], summary="Get nearby facilities")
+@router.post("/nearby", response_model=FacilityResponse, summary="Get nearby facilities")
 async def get_nearby(
     payload: Dict[str, Any] = Body(...),
     db: AsyncIOMotorDatabase = Depends(get_database),
 ):
     preferences = payload.get("preferences", {})
     facilities = await facility_service.get_nearby_facilities(db, preferences)
-    return facilities
+    
+    return FacilityResponse(
+        data=facilities,
+        source="NEARBY_SEARCH"
+    )
 
-@router.post("/search", response_model=List[FacilityPublic], summary="Search facilities with Gemini")
+@router.post("/search", response_model=FacilityResponse, summary="Search facilities with Gemini")
 async def search_facilities(
     payload: Dict[str, Any] = Body(...),
 ):
@@ -43,10 +50,14 @@ async def search_facilities(
     if not query or not user_location:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "query dan user_location diperlukan.")
     
-    results = await gemini_service.search_facilities_with_gemini(query, user_location)
-    return results
+    facilities = await gemini_service.search_facilities_with_gemini(query, user_location)
+    
+    return FacilityResponse(
+        data=facilities,
+        source="GEMINI_SEARCH"
+    )
 
-@router.get("/{facility_id}", response_model=FacilityPublic, summary="Get facility by ID")
+@router.get("/{facility_id}", summary="Get facility by ID")
 async def get_facility_by_id(
     facility_id: str,
     db: AsyncIOMotorDatabase = Depends(get_database),
@@ -54,4 +65,5 @@ async def get_facility_by_id(
     facility = await facility_service.get_facility_by_id(db, facility_id)
     if not facility:
         raise HTTPException(status_code=404, detail="Facility not found")
-    return facility
+    
+    return {"facility": facility}
